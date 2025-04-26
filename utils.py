@@ -12,7 +12,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-class DataSource(Enum):
-    API = "api"
-    LOCAL = "local"
-    AUTO = "auto"
+
+
+@dataclass
+class OptimConfig:
+    optimization_period: int  # en jours
+    gap_period: int           # en jours
+    validation_period: int    # en jours
+    n_splits: int
+

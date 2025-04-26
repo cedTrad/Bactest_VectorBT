@@ -1,14 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Tuple, List
-from dataclasses import dataclass
 
+from utils import OptimConfig
 
-@dataclass
-class OptimConfig:
-    optimization_period: int  # en jours
-    gap_period: int           # en jours
-    validation_period: int    # en jours
-    n_splits: int
 
 
 class Sampling:

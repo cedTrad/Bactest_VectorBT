@@ -1,45 +1,6 @@
+
 import optuna
-import vectorbt as vbt
 
-from processor import Processor
-from sampling import Sampling, OptimConfig
-
-
-
-# 1. Classe pour la stratégie
-class KamaStrategy:
-    def __init__(self, data):
-        self.data = data.copy()
-        self.processor = None
-
-    def apply_kama(self, fast, slow):
-        self.processor = Processor(self.data)
-        self.processor.apply_kama(name='kama_fast', level='5m', window=fast)
-        self.processor.apply_kama(name='kama_slow', level='5m', window=slow)
-        self.data = self.data.dropna()
-
-    def run(self, fast, slow):
-        self.apply_kama(fast, slow)
-        price = self.data.groupby(level='5m')['close'].last()
-        kama_fast = self.data.groupby(level='5m')['kama_fast_5m'].last()
-        kama_slow = self.data.groupby(level='5m')['kama_slow_5m'].last()
-        entries = kama_fast > kama_slow
-        exits = kama_fast < kama_slow
-        pf = vbt.Portfolio.from_signals(price, entries, exits)
-        return pf
-    
-    def viz(self, fast, slow):
-        # Appliquer la stratégie et obtenir le portefeuille
-        pf = self.run(fast, slow)
-        price = self.data.groupby(level='5m')['close'].last()
-        fast_ma = self.data.groupby(level='5m')['kama_fast_5m'].last()
-        slow_ma = self.data.groupby(level='5m')['kama_slow_5m'].last()
-        
-        fig = price.vbt.plot(trace_kwargs=dict(name='Close'))
-        fast_ma.vbt.plot(trace_kwargs=dict(name='Fast MA'), fig=fig)
-        slow_ma.vbt.plot(trace_kwargs=dict(name='Slow MA'), fig=fig)
-        pf.plot(fig=fig)
-        
 
 # 2. Classe pour l'optimisation simple
 class OptimizerSimple:
