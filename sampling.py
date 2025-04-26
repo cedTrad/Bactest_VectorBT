@@ -10,6 +10,7 @@ class OptimConfig:
     validation_period: int    # en jours
     n_splits: int
 
+
 class Sampling:
     
     def __init__(self, start: datetime, end: datetime, optim_config):
