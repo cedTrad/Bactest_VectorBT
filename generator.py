@@ -70,6 +70,7 @@ class DatabaseConnection:
             logger.info(f"❌❌ Error retrieving data: {e}")
             return pd.DataFrame()
 
+
 class Preprocessing:
     """Handles data preprocessing and time period calculations."""
     
@@ -113,30 +114,41 @@ class Preprocessing:
         })
     
     @staticmethod
-    def execute(data: pd.DataFrame, levels: List[str], interval: str) -> pd.DataFrame:
-        """
-        Execute preprocessing on the data.
-        
-        Args:
-            data: Input DataFrame
-            levels: Time levels to process
-            interval: Time interval
+    def get_level_price(data: pd.DataFrame, levels:list):
+        data_merge = data.copy()
+        levels = [level.replace('m', 'min') for level in levels]
+        for level in levels:
+            df = data.resample(level).agg({'open': 'first', 'close': 'last',
+                                           'high': 'max', 'low': 'min',
+                                           'volume': 'sum'}).reset_index()
             
-        Returns:
-            pd.DataFrame: Processed data with multi-level index
-        """
+            df = df.rename(columns = {'open': 'open_' + level, 'close': 'close_' + level,
+            'high': 'high_' + level, 'low': 'low_' + level, 'volume': 'volume_' + level})
+            
+            data_merge = pd.merge_asof(data_merge, df, on='timestamp', direction='backward')
+        return data_merge.set_index('timestamp')
+    
+    
+    @staticmethod
+    def execute(data: pd.DataFrame, levels: List[str], interval: str) -> pd.DataFrame:
+        
+        data_merge = Preprocessing.get_level_price(data, levels)
+        
         levels_to_use = []
         for level in levels:
             levels_to_use.append(level)
             if level == interval:
                 break
         
-        periods_df = data.index.to_frame().iloc[:, 0].apply(Preprocessing.get_periods)
+        periods_df = data_merge.index.to_frame().iloc[:, 0].apply(Preprocessing.get_periods)
         selected_periods = [periods_df[level] for level in levels_to_use]
         
-        data_multi = data.set_index(selected_periods)
+        data_multi = data_merge.set_index(selected_periods)
         data_multi.index.names = levels_to_use
+        
         return data_multi
+
+
 
 class BacktestDataGenerator:
     """
